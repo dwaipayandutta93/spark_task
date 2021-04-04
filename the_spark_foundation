@@ -1,0 +1,157 @@
+import vaex
+import numpy as np
+import pandas as pd
+data_1=pd.read_csv("C:\\Users\\Admin\\Python\\Spark\\globalterrorismdb_0718dist.csv")
+data_1.head()
+data_1.shape
+data_1.isna().sum()
+data_new=data_1[data_1.columns[data_1.isnull().mean()<=0.4]]
+data_new.head()
+data_new.shape
+
+
+import matplotlib as mlp
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+
+print("Country with highest terrorist attacks: ", data_new['country_txt'].value_counts().idxmax())
+print("Year in which terrorist attack was highest: ",data_new['iyear'].value_counts().idxmax())
+print("Region with highest number of terrorist attacks: ", data_new["region_txt"].value_counts().idxmax())
+
+
+####################################### DATA VISUALIZATION ##########################################################
+
+
+######################################  STATIC DATA VISUALIZATION #########################################################
+
+
+################################Top 10 countries recording terrorist attacks#########################
+
+plt.figure(figsize=(10,10))
+country=data_new['country_txt'].value_counts().index
+sns.countplot(data_new['country_txt'], order=country[:10])
+plt.xlabel("Countries")
+plt.ylabel("Count of terrorist attacks")
+plt.title("Top 10 countries recording terrorist attacks")
+plt.show()
+
+#####################################Top 10 regions recording terrorist attacks############################
+
+plt.figure(figsize=(20,10))
+country=data_new['region_txt'].value_counts().index
+sns.countplot(data_new['region_txt'], order=country[:10])
+plt.xlabel("Regions")
+plt.ylabel("Count of terrorist attacks")
+plt.title("Top 10 regions recording terrorist attacks")
+plt.show()
+
+################################Top 10 attacking modes#######################################################
+
+plt.figure(figsize=(20,10))
+country=data_new['attacktype1_txt'].value_counts().index
+sns.countplot(data_new['attacktype1_txt'], order=country[:11])
+plt.xlabel("Attack types")
+plt.ylabel("Count of attacks")
+plt.title("Top 10 attacking modes")
+plt.show()
+
+
+#Count of attacks based on region
+
+data_new["region_txt"].value_counts()
+
+
+pd.crosstab(data_new['iyear'], data_new['region_txt']).plot(kind='area', figsize=(10,10))
+plt.xlabel('Year')
+plt.ylabel('Count of attacks')
+plt.title('Region wise terrorist activities per year')
+
+
+################################# Top 5 categories of properties targeted for terrorist attacks###################################
+
+plt.figure(figsize=(25,10))
+country=data_new['targtype1_txt'].value_counts().index
+sns.countplot(data_new['targtype1_txt'], order=country[:5])
+plt.xlabel("Type of proprty targetted")
+plt.ylabel("Count of terrorist attacks")
+plt.title("Top 5 categories of properties targeted for terrorist attacks")
+plt.show()
+
+
+#####################  Top 5 terrorist groups ###########################
+
+
+plt.figure(figsize=(20,10))
+gangs=data_new['gname'].value_counts().index
+sns.countplot(data_new['gname'], order=gangs[:5])
+plt.xlabel("Gangs")
+plt.ylabel("Count of attacks")
+plt.title("Top 5 terrorist groups")
+plt.show()
+
+#################  Countries facing attaks prevailing for more than 24 hrs #######################
+
+data1=data_new.groupby('country_txt')['extended'].sum()
+data1.head()
+
+data1=pd.DataFrame(data1)
+data1=data1.sort_values('extended', ascending=False)
+
+data1=data1[data1.extended!=0]
+data1.head()
+
+data1=data1.reset_index()
+data1=data1.iloc[:10]
+sns.barplot(data1.country_txt, data1.extended, hue=data1.country_txt, dodge=False)
+
+####################### Year showing highest number of kills ########################################
+
+
+data2=data_new.groupby('iyear')['nkill'].sum()
+data2=pd.DataFrame(data2)
+data2.head()
+
+data2=data2.sort_values('nkill', ascending=False)
+data2=data2.reset_index()
+data2=data2.iloc[:10]
+sns.barplot(data2.iyear, data2.nkill, hue=data2.iyear, dodge=False)
+
+
+
+######################### Dynamic visualization ###############################
+
+
+pip install plotly
+from scipy import signal
+import plotly.express as px
+conda install -c plotly plotly=4.14.4
+
+
+
+############ Barplot#############
+
+figure=px.bar(data_new, x="iyear", y="nkill", color="gname", labels={'iyear':'Year', 'nkill':'Number of deaths',
+                                                                          'country_txt':'Country', 'nwound':'Wounded',
+                                                                           'gname':'Extremist Groups', 'region_txt':'Region'},
+                     title="Number of deaths")
+figure.show()
+
+
+############# Maps ###########
+
+
+maps=px.choropleth(data_new, locations='country_txt', locationmode='country names', color='nkill', animation_group='nkill',
+                  animation_frame='iyear', labels={'iyear':'Year', 'nkill':'Number of deaths', 'country_txt': 'Country' },
+                   title='Deaths in countries each year')
+maps.show()
+
+
+################## Treemap ########################
+
+plot=px.treemap(data_new, values="casualities", path=['region_txt', 'targtype1_txt'],
+                color_discrete_sequence=px.colors.qualitative.Dark24,
+               title="Deatils of groups being attacked")
+plot.show()
+
+
